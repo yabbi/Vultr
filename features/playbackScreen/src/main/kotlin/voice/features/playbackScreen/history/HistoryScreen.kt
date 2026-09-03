@@ -36,8 +36,11 @@ import androidx.compose.material3.Icon
 import dev.zacsweers.metro.AppScope
 import dev.zacsweers.metro.ContributesTo
 import voice.core.data.ListeningHistoryAction
+import java.time.Duration
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
 import java.util.Locale
 import voice.core.strings.R as StringsR
 import voice.core.ui.R as UiR
@@ -104,7 +107,7 @@ fun HistorySheetContent(
                 color = RavenTheme.colors.title,
               )
               Text(
-                text = day.summary,
+                text = daySummary(day),
                 fontSize = 12.sp,
                 letterSpacing = (-0.06).sp,
                 color = RavenTheme.colors.caption,
@@ -146,20 +149,41 @@ private fun HistoryRow(
         modifier = Modifier.weight(1f),
         verticalArrangement = Arrangement.spacedBy(4.dp),
       ) {
+        Row(
+          modifier = Modifier.fillMaxWidth(),
+          horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+          Text(
+            text = buildString {
+              if (entry.chapterName != null) {
+                append(entry.chapterName)
+                append(" - ")
+              }
+              append(entry.positionText)
+            },
+            modifier = Modifier.weight(1f, fill = false),
+            fontSize = 12.sp,
+            letterSpacing = (-0.06).sp,
+            color = RavenTheme.colors.subTitle,
+          )
+          Text(
+            text = formatClock(entry.time),
+            modifier = Modifier.padding(start = 8.dp),
+            fontSize = 12.sp,
+            letterSpacing = (-0.06).sp,
+            color = RavenTheme.colors.subTitle,
+          )
+        }
         Text(
           text = buildString {
-            if (entry.chapterName != null) {
-              append(entry.chapterName)
-              append(" - ")
+            append(actionLabel(entry.action))
+            if (entry.listenedMs >= 60_000L) {
+              append(" · ")
+              append(stringResource(StringsR.string.history_listened, formatDuration(entry.listenedMs)))
             }
-            append(entry.positionText)
+            append(" · ")
+            append(entry.globalPositionText)
           },
-          fontSize = 12.sp,
-          letterSpacing = (-0.06).sp,
-          color = RavenTheme.colors.subTitle,
-        )
-        Text(
-          text = "${actionLabel(entry.action)} · ${entry.globalPositionText}",
           fontSize = 12.sp,
           letterSpacing = (-0.06).sp,
           color = RavenTheme.colors.caption,
@@ -223,9 +247,38 @@ private fun actionLabel(action: ListeningHistoryAction?): String {
 
 @Composable
 private fun dayLabel(date: LocalDate): String {
-  return when (date) {
-    LocalDate.now() -> stringResource(StringsR.string.bookmark_today)
-    LocalDate.now().minusDays(1) -> stringResource(StringsR.string.bookmark_yesterday)
-    else -> date.format(DateTimeFormatter.ofPattern("MMM d, yyyy", Locale.getDefault()))
+  val today = LocalDate.now()
+  return when {
+    date == today -> stringResource(StringsR.string.bookmark_today)
+    date == today.minusDays(1) -> stringResource(StringsR.string.bookmark_yesterday)
+    date.year == today.year -> date.format(DateTimeFormatter.ofPattern("EEE, MMM d", Locale.getDefault()))
+    else -> date.format(DateTimeFormatter.ofPattern("EEE, MMM d, yyyy", Locale.getDefault()))
+  }
+}
+
+@Composable
+private fun daySummary(day: HistoryDayViewState): String {
+  val range = if (day.firstTime == day.lastTime) {
+    formatClock(day.firstTime)
+  } else {
+    "${formatClock(day.firstTime)} – ${formatClock(day.lastTime)}"
+  }
+  return "$range · ${stringResource(StringsR.string.history_listened, formatDuration(day.totalListenedMs))}"
+}
+
+private fun formatClock(time: LocalTime): String {
+  return time.format(DateTimeFormatter.ofLocalizedTime(FormatStyle.SHORT).withLocale(Locale.getDefault()))
+}
+
+@Composable
+private fun formatDuration(ms: Long): String {
+  val duration = Duration.ofMillis(ms)
+  val hours = duration.toHours()
+  val minutes = duration.toMinutesPart()
+  return when {
+    hours > 0 && minutes > 0 -> stringResource(StringsR.string.history_duration_hours_minutes, hours, minutes)
+    hours > 0 -> stringResource(StringsR.string.history_duration_hours, hours)
+    minutes > 0 -> stringResource(StringsR.string.history_duration_minutes, minutes)
+    else -> stringResource(StringsR.string.history_duration_under_minute)
   }
 }

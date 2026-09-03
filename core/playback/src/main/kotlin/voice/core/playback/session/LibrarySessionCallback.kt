@@ -49,6 +49,7 @@ class LibrarySessionCallback(
   private val bookRepository: BookRepository,
   private val bookmarkRepo: BookmarkRepo,
   private val mediaButtonEventHandler: MediaButtonEventHandler,
+  private val dynamicMediaButtons: DynamicMediaButtons,
 ) : MediaLibrarySession.Callback {
 
   override fun onAddMediaItems(
@@ -170,9 +171,10 @@ class LibrarySessionCallback(
   ): ConnectionResult {
     Logger.d("onConnect to ${controller.packageName}")
 
-    if (player.playbackState == Player.STATE_IDLE &&
-      controller.packageName == "com.google.android.projection.gearhead"
-    ) {
+    if (controller.isAndroidAuto) {
+      dynamicMediaButtons.onAndroidAutoConnected()
+    }
+    if (player.playbackState == Player.STATE_IDLE && controller.isAndroidAuto) {
       Logger.d("onConnect to ${controller.packageName} and player is idle.")
       Logger.d("Preparing current book so it shows up as recently played")
       scope.launch {
@@ -189,6 +191,16 @@ class LibrarySessionCallback(
       sessionCommands,
       connectionResult.availablePlayerCommands,
     )
+  }
+
+  override fun onDisconnected(
+    session: MediaSession,
+    controller: ControllerInfo,
+  ) {
+    if (controller.isAndroidAuto) {
+      dynamicMediaButtons.onAndroidAutoDisconnected()
+    }
+    super.onDisconnected(session, controller)
   }
 
   private suspend fun prepareCurrentBook() {
@@ -213,6 +225,12 @@ class LibrarySessionCallback(
       }
       CustomCommand.ForceSeekToPrevious -> {
         player.forceSeekToPrevious()
+      }
+      CustomCommand.SeekBack -> {
+        player.seekBack()
+      }
+      CustomCommand.SeekForward -> {
+        player.seekForward()
       }
       is CustomCommand.SetSkipSilence -> {
         player.setSkipSilenceEnabled(command.skipSilence)
@@ -246,11 +264,13 @@ class LibrarySessionCallback(
   ): Boolean {
     val keyEvent = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_KEY_EVENT, KeyEvent::class.java)
     if (keyEvent != null) {
-      val isAndroidAuto = controllerInfo.packageName == "com.google.android.projection.gearhead"
-      if (mediaButtonEventHandler.onKeyEvent(keyEvent, isAndroidAuto = isAndroidAuto)) {
+      if (mediaButtonEventHandler.onKeyEvent(keyEvent, isAndroidAuto = controllerInfo.isAndroidAuto)) {
         return true
       }
     }
     return super.onMediaButtonEvent(session, controllerInfo, intent)
   }
 }
+
+private val ControllerInfo.isAndroidAuto: Boolean
+  get() = packageName == "com.google.android.projection.gearhead"

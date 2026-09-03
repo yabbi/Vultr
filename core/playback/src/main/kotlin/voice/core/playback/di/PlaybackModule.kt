@@ -104,7 +104,7 @@ interface PlaybackModule {
   ): MediaLibraryService.MediaLibrarySession {
     return MediaLibraryService.MediaLibrarySession.Builder(service, player, callback)
       .setSessionActivity(mainActivityIntentProvider.toCurrentBook())
-      .setMediaButtonPreferences(mediaButtonLayout.buttons(player.playbackParameters.speed))
+      .setMediaButtonPreferences(mediaButtonLayout.buttons(player.playbackParameters.speed, androidAutoConnected = false))
       .build()
       .also { session ->
         dynamicMediaButtons.attachTo(session)

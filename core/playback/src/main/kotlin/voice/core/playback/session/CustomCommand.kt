@@ -23,6 +23,12 @@ internal sealed interface CustomCommand {
   data class SetGain(val gain: Decibel) : CustomCommand
 
   @Serializable
+  data object SeekBack : CustomCommand
+
+  @Serializable
+  data object SeekForward : CustomCommand
+
+  @Serializable
   data object AddBookmark : CustomCommand
 
   @Serializable

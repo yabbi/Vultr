@@ -19,6 +19,7 @@ import voice.core.data.repo.ListeningSessionRepo
 import voice.core.ui.formatTime
 import voice.navigation.Navigator
 import java.time.LocalDate
+import java.time.LocalTime
 import java.time.ZoneId
 
 @AssistedInject
@@ -52,17 +53,12 @@ class HistoryViewModel(
         .groupBy { it.createdAt.atZone(zone).toLocalDate() }
         .map { (date, sessions) ->
           val totalListenedMs = sessions.sumOf { it.listenedMs }
-          val totalMinutes = totalListenedMs / 60_000L
-          val hours = totalMinutes / 60L
-          val minutes = totalMinutes % 60L
-          val summary = if (hours > 0) {
-            "$hours hours listened"
-          } else {
-            "$minutes minutes listened"
-          }
+          val times = sessions.map { it.createdAt.atZone(zone).toLocalTime() }
           HistoryDayViewState(
             date = date,
-            summary = summary,
+            firstTime = times.min(),
+            lastTime = times.max(),
+            totalListenedMs = totalListenedMs,
             entries = sessions.map { session ->
               val info = chaptersById[session.chapterId]?.positionInfo(session.positionInChapter)
               val positionText = if (info != null) {
@@ -78,6 +74,8 @@ class HistoryViewModel(
               HistoryEntryViewState(
                 id = session.id,
                 action = runCatching { ListeningHistoryAction.valueOf(session.action) }.getOrNull(),
+                time = session.createdAt.atZone(zone).toLocalTime(),
+                listenedMs = session.listenedMs,
                 chapterName = info?.name,
                 positionText = positionText,
                 globalPositionText = formatTime(globalPositionMs, bookDurationMs),
@@ -126,13 +124,17 @@ data class HistoryViewState(
 
 data class HistoryDayViewState(
   val date: LocalDate,
-  val summary: String,
+  val firstTime: LocalTime,
+  val lastTime: LocalTime,
+  val totalListenedMs: Long,
   val entries: List<HistoryEntryViewState>,
 )
 
 data class HistoryEntryViewState(
   val id: ListeningSession.Id,
   val action: ListeningHistoryAction?,
+  val time: LocalTime,
+  val listenedMs: Long,
   val chapterName: String?,
   val positionText: String,
   val globalPositionText: String,
