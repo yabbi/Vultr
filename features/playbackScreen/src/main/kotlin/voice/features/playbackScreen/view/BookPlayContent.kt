@@ -265,7 +265,7 @@ private fun PlayerHeader(
       letterSpacing = (-0.12).sp,
       textAlign = TextAlign.Center,
       color = RavenTheme.colors.title,
-      maxLines = 1,
+      maxLines = 2,
       overflow = TextOverflow.Ellipsis,
     )
     if (!author.isNullOrBlank()) {
