@@ -13,12 +13,35 @@ internal object CoverColors {
   private const val QUANT_BITS = 4
   private const val QUANT_SHIFT = 8 - QUANT_BITS
   private const val MIN_SATURATION = 0.12f
+  private const val MIN_TEXT_CONTRAST = 4.5f
+  private const val MAX_DARK_LUMINANCE = 0.45f
 
   /**
-   * Returns the most present color of the given pixels, ignoring near black / white and
-   * desaturated buckets. Returns null when the image has no usable color.
+   * Ranks the image's colors by how many pixels they cover, drops the ones that would not be
+   * readable as text on [background], and returns the most present survivor untouched.
    */
-  fun accent(pixels: IntArray): Int? {
+  fun accent(
+    pixels: IntArray,
+    dark: Boolean,
+    background: Int,
+  ): Int? {
+    return rankedColors(pixels)
+      .firstOrNull { isUsable(it, dark, background) }
+  }
+
+  fun isUsable(
+    color: Int,
+    dark: Boolean,
+    background: Int,
+  ): Boolean {
+    if (toHsl(color).saturation < MIN_SATURATION) return false
+    if (contrast(color, background) < MIN_TEXT_CONTRAST) return false
+    if (dark && luminance(color) > MAX_DARK_LUMINANCE) return false
+    return true
+  }
+
+  /** Colors present in the image, most common first. */
+  fun rankedColors(pixels: IntArray): List<Int> {
     val bucketCount = 1 shl (QUANT_BITS * 3)
     val counts = IntArray(bucketCount)
     val sumR = LongArray(bucketCount)
@@ -37,28 +60,17 @@ internal object CoverColors {
       sumG[bucket] += g.toLong()
       sumB[bucket] += b.toLong()
     }
-
-    var best: Int? = null
-    var bestScore = 0f
-    for (bucket in 0 until bucketCount) {
-      val count = counts[bucket]
-      if (count == 0) continue
-      val color = rgb(
-        (sumR[bucket] / count).toInt(),
-        (sumG[bucket] / count).toInt(),
-        (sumB[bucket] / count).toInt(),
-      )
-      val hsl = toHsl(color)
-      if (hsl.lightness < 0.08f || hsl.lightness > 0.92f) continue
-      if (hsl.saturation < MIN_SATURATION) continue
-      // Frequency dominates, saturation breaks ties towards vivid colors.
-      val score = count * (0.25f + hsl.saturation)
-      if (score > bestScore) {
-        bestScore = score
-        best = color
+    return (0 until bucketCount)
+      .filter { counts[it] > 0 }
+      .sortedByDescending { counts[it] }
+      .map { bucket ->
+        val count = counts[bucket]
+        rgb(
+          (sumR[bucket] / count).toInt(),
+          (sumG[bucket] / count).toInt(),
+          (sumB[bucket] / count).toInt(),
+        )
       }
-    }
-    return best
   }
 
   data class Tokens(
@@ -68,45 +80,21 @@ internal object CoverColors {
     val primaryFaint: Int,
   )
 
-  /**
-   * Normalizes the accent so it reads as text against [background] and derives the related brand
-   * tokens. HSL lightness alone is not enough: yellows and cyans at medium lightness are still
-   * nearly white, so the final check is a WCAG contrast ratio.
-   */
+  /** Uses [accent] as-is and derives the related brand tokens from its hue. */
   fun tokens(
     accent: Int,
     dark: Boolean,
-    background: Int,
   ): Tokens {
     val hsl = toHsl(accent)
     val hue = hsl.hue
-    val saturation = hsl.saturation.coerceIn(0.4f, 0.9f)
-    var lightness = hsl.lightness.coerceIn(0.42f, 0.6f)
-    if (dark) {
-      while (lightness > MIN_LIGHTNESS && luminance(fromHsl(hue, saturation, lightness)) > MAX_DARK_LUMINANCE) {
-        lightness -= LIGHTNESS_STEP
-      }
-      while (lightness < MAX_LIGHTNESS && contrast(fromHsl(hue, saturation, lightness), background) < MIN_TEXT_CONTRAST) {
-        lightness += LIGHTNESS_STEP
-      }
-    } else {
-      while (lightness > MIN_LIGHTNESS && contrast(fromHsl(hue, saturation, lightness), background) < MIN_TEXT_CONTRAST) {
-        lightness -= LIGHTNESS_STEP
-      }
-    }
+    val saturation = hsl.saturation
     return Tokens(
-      primary = fromHsl(hue, saturation, lightness),
+      primary = accent,
       primaryLight = fromHsl(hue, saturation, if (dark) 0.68f else 0.78f),
       primaryDark = fromHsl(hue, saturation, if (dark) 0.85f else 0.22f),
       primaryFaint = fromHsl(hue, saturation.coerceAtMost(0.6f), if (dark) 0.12f else 0.96f),
     )
   }
-
-  private const val MIN_TEXT_CONTRAST = 4.5f
-  private const val MAX_DARK_LUMINANCE = 0.45f
-  private const val LIGHTNESS_STEP = 0.02f
-  private const val MIN_LIGHTNESS = 0.15f
-  private const val MAX_LIGHTNESS = 0.85f
 
   fun contrast(
     a: Int,

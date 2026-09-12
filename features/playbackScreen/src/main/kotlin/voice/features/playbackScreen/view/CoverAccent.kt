@@ -20,23 +20,28 @@ private const val ANALYSIS_SIZE = 64
 
 @Composable
 internal fun rememberCoverAccent(cover: ImmutableFile?): Color? {
-  val accent by produceState<Color?>(initialValue = null, key1 = cover) {
+  val colors = RavenTheme.colors
+  val accent by produceState<Color?>(initialValue = null, cover, colors.isDark, colors.bgMain) {
     value = if (cover == null) {
       null
     } else {
-      withContext(Dispatchers.IO) { extractAccent(cover) }
+      withContext(Dispatchers.IO) { extractAccent(cover, colors.isDark, colors.bgMain.toArgb()) }
     }
   }
   return accent
 }
 
-private fun extractAccent(cover: ImmutableFile): Color? {
+private fun extractAccent(
+  cover: ImmutableFile,
+  dark: Boolean,
+  background: Int,
+): Color? {
   val bitmap = decodeSmall(cover) ?: return null
   return try {
     val analysis = Bitmap.createScaledBitmap(bitmap, ANALYSIS_SIZE, ANALYSIS_SIZE, true)
     val pixels = IntArray(ANALYSIS_SIZE * ANALYSIS_SIZE)
     analysis.getPixels(pixels, 0, ANALYSIS_SIZE, 0, 0, ANALYSIS_SIZE, ANALYSIS_SIZE)
-    CoverColors.accent(pixels)?.let(::Color)
+    CoverColors.accent(pixels, dark, background)?.let(::Color)
   } catch (e: Exception) {
     null
   }
@@ -70,7 +75,7 @@ internal fun CoverAccentTheme(
   content: @Composable () -> Unit,
 ) {
   val base = RavenTheme.colors
-  val tokens = accent?.let { CoverColors.tokens(it.toArgb(), base.isDark, base.bgMain.toArgb()) }
+  val tokens = accent?.let { CoverColors.tokens(it.toArgb(), base.isDark) }
   val primary by animateColorAsState(tokens?.primary?.let(::Color) ?: base.primary, label = "accent")
   val primaryLight by animateColorAsState(tokens?.primaryLight?.let(::Color) ?: base.primaryLight, label = "accentLight")
   val primaryDark by animateColorAsState(tokens?.primaryDark?.let(::Color) ?: base.primaryDark, label = "accentDark")
