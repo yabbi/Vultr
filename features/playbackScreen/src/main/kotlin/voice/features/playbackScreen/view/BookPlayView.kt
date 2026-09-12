@@ -10,18 +10,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.tooling.preview.PreviewParameter
 import androidx.compose.ui.tooling.preview.PreviewParameterProvider
+import voice.core.data.PlaybackTimeDisplay
 import voice.core.ui.VoiceTheme
 import voice.features.playbackScreen.BookPlayViewState
-import java.text.DecimalFormat
 import kotlin.time.Duration
 import kotlin.time.Duration.Companion.minutes
-
-// Shows up to two decimals, trimming trailing zeros: 1 → "1×", 1.5 → "1.5×", 1.15 → "1.15×".
-private val speedFormat = DecimalFormat("0.##")
-
-private fun formatSpeed(speed: Float): String {
-  return speedFormat.format(speed) + "×"
-}
 
 @Composable
 internal fun BookPlayView(
@@ -31,6 +24,7 @@ internal fun BookPlayView(
   onRewindClick: () -> Unit,
   onFastForwardClick: () -> Unit,
   onSeek: (Duration) -> Unit,
+  onTimeDisplayClick: () -> Unit,
   onSleepTimerClick: () -> Unit,
   onBookmarkClick: () -> Unit,
   onBookmarkLongClick: () -> Unit,
@@ -84,6 +78,7 @@ internal fun BookPlayView(
         onRewindClick = onRewindClick,
         onFastForwardClick = onFastForwardClick,
         onSeek = onSeek,
+        onTimeDisplayClick = onTimeDisplayClick,
         onSkipToNext = onSkipToNext,
         onSkipToPrevious = onSkipToPrevious,
         onCurrentChapterClick = onCurrentChapterClick,
@@ -112,6 +107,7 @@ private fun BookPlayPreview(
       onRewindClick = {},
       onFastForwardClick = {},
       onSeek = {},
+      onTimeDisplayClick = {},
       onSleepTimerClick = {},
       onBookmarkClick = {},
       onBookmarkLongClick = {},
@@ -138,6 +134,9 @@ private class BookPlayViewStatePreviewProvider : PreviewParameterProvider<BookPl
       cover = null,
       duration = 10.minutes,
       playedTime = 3.minutes,
+      bookDuration = 120.minutes,
+      bookPlayedTime = 43.minutes,
+      timeDisplay = PlaybackTimeDisplay.CHAPTER_TOTAL,
       playing = true,
       skipSilence = true,
       sleepTimerState = BookPlayViewState.SleepTimerViewState.Disabled,

@@ -20,6 +20,7 @@ import voice.core.common.MainScope
 import voice.core.data.Book
 import voice.core.data.BookId
 import voice.core.data.Bookmark
+import voice.core.data.PlaybackTimeDisplay
 import voice.core.data.durationMs
 import voice.core.data.markForPosition
 import voice.core.data.positionInfo
@@ -27,6 +28,7 @@ import voice.core.data.repo.BookRepository
 import voice.core.data.repo.BookmarkRepo
 import voice.core.data.sleeptimer.SleepTimerPreference
 import voice.core.data.store.CurrentBookStore
+import voice.core.data.store.PlaybackTimeDisplayStore
 import voice.core.data.store.SleepTimerPreferenceStore
 import voice.core.featureflag.ExperimentalPlaybackPersistenceQualifier
 import voice.core.featureflag.FeatureFlag
@@ -75,6 +77,8 @@ class BookPlayViewModel(
   dispatcherProvider: DispatcherProvider,
   @SleepTimerPreferenceStore
   private val sleepTimerPreferenceStore: DataStore<SleepTimerPreference>,
+  @PlaybackTimeDisplayStore
+  private val playbackTimeDisplayStore: DataStore<PlaybackTimeDisplay>,
   @ExperimentalPlaybackPersistenceQualifier
   private val experimentalPlaybackPersistenceFeatureFlag: FeatureFlag<Boolean>,
   @Assisted
@@ -131,6 +135,8 @@ class BookPlayViewModel(
     }
 
     val sleepTime = remember { sleepTimer.state }.collectAsState().value
+    val timeDisplay = remember { playbackTimeDisplayStore.data }
+      .collectAsState(initial = PlaybackTimeDisplay.CHAPTER_TOTAL).value
     val hasMoreThanOneChapter = book.chapters.sumOf { it.chapterMarks.count() } > 1
     return BookPlayViewState(
       sleepTimerState = sleepTime.toViewState(),
@@ -142,6 +148,9 @@ class BookPlayViewModel(
       chapterName = currentMark.name.takeIf { hasMoreThanOneChapter },
       duration = currentMark.durationMs.milliseconds,
       playedTime = positionInCurrentMark.milliseconds,
+      bookPlayedTime = book.position.milliseconds,
+      bookDuration = book.duration.milliseconds,
+      timeDisplay = timeDisplay,
       cover = book.content.cover?.let(::ImmutableFile),
       skipSilence = book.content.skipSilence,
     )
@@ -472,6 +481,12 @@ class BookPlayViewModel(
         setBySleepTimer = false,
       )
       _viewEffects.tryEmit(BookPlayViewEffect.BookmarkAdded)
+    }
+  }
+
+  fun cycleTimeDisplay() {
+    scope.launch {
+      playbackTimeDisplayStore.updateData { it.next() }
     }
   }
 

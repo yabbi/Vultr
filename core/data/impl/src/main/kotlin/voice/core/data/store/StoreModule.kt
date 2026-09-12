@@ -13,6 +13,7 @@ import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.builtins.serializer
 import voice.core.data.BookId
 import voice.core.data.GridMode
+import voice.core.data.PlaybackTimeDisplay
 import voice.core.data.ReaderProfile
 import voice.core.data.ThemeMode
 import voice.core.data.sleeptimer.SleepTimerPreference
@@ -130,6 +131,17 @@ public interface StoreModule {
           },
         ),
       ),
+    )
+  }
+
+  @Provides
+  @SingleIn(AppScope::class)
+  @PlaybackTimeDisplayStore
+  private fun playbackTimeDisplay(factory: VoiceDataStoreFactory): DataStore<PlaybackTimeDisplay> {
+    return factory.create(
+      serializer = PlaybackTimeDisplay.serializer(),
+      fileName = "playbackTimeDisplay",
+      defaultValue = PlaybackTimeDisplay.CHAPTER_TOTAL,
     )
   }
 

@@ -46,3 +46,6 @@ public annotation class FeatureFlagOverridesStore
 
 @Qualifier
 public annotation class ReaderProfileStore
+
+@Qualifier
+public annotation class PlaybackTimeDisplayStore

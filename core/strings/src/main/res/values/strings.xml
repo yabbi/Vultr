@@ -37,6 +37,9 @@
     <string name="player_action_speed">Speed</string>
     <string name="player_action_bookmarks">Bookmarks</string>
     <string name="player_action_sleep">Sleep</string>
+    <string name="time_display_chapter_total">chapter</string>
+    <string name="time_display_chapter_remaining">chapter left</string>
+    <string name="time_display_book_remaining">book left</string>
     <string name="settings_section_appearance">Appearance</string>
     <string name="settings_section_playback">Playback</string>
     <string name="settings_section_library">Library</string>

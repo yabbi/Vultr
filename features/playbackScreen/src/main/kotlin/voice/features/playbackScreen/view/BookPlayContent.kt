@@ -33,6 +33,7 @@ internal fun BookPlayContent(
   onRewindClick: () -> Unit,
   onFastForwardClick: () -> Unit,
   onSeek: (Duration) -> Unit,
+  onTimeDisplayClick: () -> Unit,
   onSkipToNext: () -> Unit,
   onSkipToPrevious: () -> Unit,
   onCurrentChapterClick: () -> Unit,
@@ -52,6 +53,7 @@ internal fun BookPlayContent(
       onRewindClick = onRewindClick,
       onFastForwardClick = onFastForwardClick,
       onSeek = onSeek,
+      onTimeDisplayClick = onTimeDisplayClick,
       onSkipToNext = onSkipToNext,
       onSkipToPrevious = onSkipToPrevious,
       onCurrentChapterClick = onCurrentChapterClick,
@@ -70,6 +72,7 @@ internal fun BookPlayContent(
       onRewindClick = onRewindClick,
       onFastForwardClick = onFastForwardClick,
       onSeek = onSeek,
+      onTimeDisplayClick = onTimeDisplayClick,
       onSkipToNext = onSkipToNext,
       onSkipToPrevious = onSkipToPrevious,
       onCurrentChapterClick = onCurrentChapterClick,
@@ -86,6 +89,7 @@ private fun PortraitContent(
   onRewindClick: () -> Unit,
   onFastForwardClick: () -> Unit,
   onSeek: (Duration) -> Unit,
+  onTimeDisplayClick: () -> Unit,
   onSkipToNext: () -> Unit,
   onSkipToPrevious: () -> Unit,
   onCurrentChapterClick: () -> Unit,
@@ -120,7 +124,12 @@ private fun PortraitContent(
     SliderRow(
       duration = viewState.duration,
       playedTime = viewState.playedTime,
+      bookDuration = viewState.bookDuration,
+      bookPlayedTime = viewState.bookPlayedTime,
+      playbackSpeed = viewState.playbackSpeed,
+      timeDisplay = viewState.timeDisplay,
       onSeek = onSeek,
+      onTimeDisplayClick = onTimeDisplayClick,
     )
     Spacer(modifier = Modifier.size(16.dp))
     PlaybackRow(
@@ -144,6 +153,7 @@ private fun LandscapeContent(
   onRewindClick: () -> Unit,
   onFastForwardClick: () -> Unit,
   onSeek: (Duration) -> Unit,
+  onTimeDisplayClick: () -> Unit,
   onSkipToNext: () -> Unit,
   onSkipToPrevious: () -> Unit,
   onCurrentChapterClick: () -> Unit,
@@ -201,7 +211,12 @@ private fun LandscapeContent(
         SliderRow(
           duration = viewState.duration,
           playedTime = viewState.playedTime,
+          bookDuration = viewState.bookDuration,
+          bookPlayedTime = viewState.bookPlayedTime,
+          playbackSpeed = viewState.playbackSpeed,
+          timeDisplay = viewState.timeDisplay,
           onSeek = onSeek,
+          onTimeDisplayClick = onTimeDisplayClick,
         )
         Spacer(modifier = Modifier.size(16.dp))
         PlaybackRow(

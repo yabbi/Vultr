@@ -1,6 +1,7 @@
 package voice.features.playbackScreen.view
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
@@ -12,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -27,9 +29,12 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import voice.core.data.PlaybackTimeDisplay
+import voice.core.strings.R
 import voice.core.ui.RavenTheme
 import voice.core.ui.formatTime
 import kotlin.math.roundToInt
@@ -39,7 +44,12 @@ import kotlin.time.Duration
 internal fun SliderRow(
   duration: Duration,
   playedTime: Duration,
+  bookDuration: Duration,
+  bookPlayedTime: Duration,
+  playbackSpeed: Float,
+  timeDisplay: PlaybackTimeDisplay,
   onSeek: (Duration) -> Unit,
+  onTimeDisplayClick: () -> Unit,
 ) {
   var dragging by remember { mutableStateOf(false) }
   var localValue by remember { mutableFloatStateOf(0f) }
@@ -113,10 +123,14 @@ internal fun SliderRow(
       )
     }
     Spacer(Modifier.height(6.dp))
-    Row(modifier = Modifier.fillMaxWidth()) {
+    val shownPlayedTime = if (dragging) duration * localValue.toDouble() else playedTime
+    Row(
+      modifier = Modifier.fillMaxWidth(),
+      verticalAlignment = Alignment.CenterVertically,
+    ) {
       Text(
         text = formatTime(
-          timeMs = if (dragging) (duration * localValue.toDouble()).inWholeMilliseconds else playedTime.inWholeMilliseconds,
+          timeMs = shownPlayedTime.inWholeMilliseconds,
           durationMs = duration.inWholeMilliseconds,
         ),
         fontSize = 12.sp,
@@ -124,12 +138,60 @@ internal fun SliderRow(
         color = RavenTheme.colors.caption,
       )
       Spacer(Modifier.weight(1f))
-      Text(
-        text = formatTime(timeMs = duration.inWholeMilliseconds, durationMs = duration.inWholeMilliseconds),
-        fontSize = 12.sp,
-        letterSpacing = (-0.06).sp,
-        color = RavenTheme.colors.caption,
+      TimeDisplayLabel(
+        timeDisplay = timeDisplay,
+        chapterDuration = duration,
+        chapterPlayedTime = shownPlayedTime,
+        bookDuration = bookDuration,
+        bookPlayedTime = bookPlayedTime - playedTime + shownPlayedTime,
+        playbackSpeed = playbackSpeed,
+        onClick = onTimeDisplayClick,
       )
     }
+  }
+}
+
+@Composable
+private fun TimeDisplayLabel(
+  timeDisplay: PlaybackTimeDisplay,
+  chapterDuration: Duration,
+  chapterPlayedTime: Duration,
+  bookDuration: Duration,
+  bookPlayedTime: Duration,
+  playbackSpeed: Float,
+  onClick: () -> Unit,
+) {
+  val speed = playbackSpeed.toDouble().coerceAtLeast(0.01)
+  val (time, reference) = when (timeDisplay) {
+    PlaybackTimeDisplay.CHAPTER_TOTAL -> chapterDuration to chapterDuration
+    PlaybackTimeDisplay.CHAPTER_REMAINING -> (chapterDuration - chapterPlayedTime) to chapterDuration
+    PlaybackTimeDisplay.BOOK_REMAINING -> ((bookDuration - bookPlayedTime) / speed) to (bookDuration / speed)
+  }
+  val prefix = if (timeDisplay == PlaybackTimeDisplay.CHAPTER_TOTAL) "" else "-"
+  val caption = when (timeDisplay) {
+    PlaybackTimeDisplay.CHAPTER_TOTAL -> stringResource(R.string.time_display_chapter_total)
+    PlaybackTimeDisplay.CHAPTER_REMAINING -> stringResource(R.string.time_display_chapter_remaining)
+    PlaybackTimeDisplay.BOOK_REMAINING -> stringResource(R.string.time_display_book_remaining)
+  }
+  Row(
+    verticalAlignment = Alignment.CenterVertically,
+    modifier = Modifier.clickable(onClick = onClick),
+  ) {
+    Text(
+      text = prefix + formatTime(
+        timeMs = time.inWholeMilliseconds.coerceAtLeast(0L),
+        durationMs = reference.inWholeMilliseconds,
+      ),
+      fontSize = 12.sp,
+      letterSpacing = (-0.06).sp,
+      color = RavenTheme.colors.caption,
+    )
+    Spacer(Modifier.width(4.dp))
+    Text(
+      text = caption,
+      fontSize = 10.sp,
+      letterSpacing = (-0.05).sp,
+      color = RavenTheme.colors.caption,
+    )
   }
 }

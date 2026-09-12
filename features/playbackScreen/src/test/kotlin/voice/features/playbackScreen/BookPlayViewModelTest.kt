@@ -28,6 +28,7 @@ import voice.core.data.Bookmark
 import voice.core.data.Chapter
 import voice.core.data.ChapterId
 import voice.core.data.MarkData
+import voice.core.data.PlaybackTimeDisplay
 import voice.core.data.sleeptimer.SleepTimerPreference
 import voice.core.featureflag.MemoryFeatureFlag
 import voice.core.playback.CurrentBookResolver
@@ -108,6 +109,7 @@ class BookPlayViewModelTest {
     volumeGainFormatter = mockk(),
     batteryOptimization = mockk(),
     sleepTimerPreferenceStore = sleepTimerDataStore,
+      playbackTimeDisplayStore = MemoryDataStore(PlaybackTimeDisplay.CHAPTER_TOTAL),
     bookId = book.id,
     dispatcherProvider = DispatcherProvider(scope.coroutineContext, scope.coroutineContext, scope.coroutineContext),
     experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(false),
@@ -305,11 +307,45 @@ class BookPlayViewModelTest {
     }
   }
 
+  @Test
+  fun `viewState exposes book totals and persisted time display`() = scope.runTest {
+    val store = MemoryDataStore(PlaybackTimeDisplay.BOOK_REMAINING)
+    val viewModel = viewModel(playbackTimeDisplayStore = store)
+
+    backgroundScope.launchMolecule(RecompositionMode.Immediate) {
+      viewModel.viewState()
+    }.test {
+      awaitItem() shouldBe null
+      // The first state carries the store's placeholder until the persisted value is collected.
+      var state = awaitItem()!!
+      while (state.timeDisplay != PlaybackTimeDisplay.BOOK_REMAINING) {
+        state = awaitItem()!!
+      }
+      state.bookPlayedTime shouldBe 7.5.minutes
+      state.bookDuration shouldBe 10.minutes
+    }
+  }
+
+  @Test
+  fun `cycleTimeDisplay advances and wraps the persisted mode`() = scope.runTest {
+    val store = MemoryDataStore(PlaybackTimeDisplay.BOOK_REMAINING)
+    val viewModel = viewModel(playbackTimeDisplayStore = store)
+
+    viewModel.cycleTimeDisplay()
+    yield()
+    store.data.first() shouldBe PlaybackTimeDisplay.CHAPTER_TOTAL
+
+    viewModel.cycleTimeDisplay()
+    yield()
+    store.data.first() shouldBe PlaybackTimeDisplay.CHAPTER_REMAINING
+  }
+
   private fun viewModel(
     book: Book = this.book,
     experimentalPlaybackPersistence: Boolean = false,
     livePlaybackFlow: MutableStateFlow<LivePlaybackState?> = MutableStateFlow(null),
     playStateFlow: MutableStateFlow<PlayStateManager.PlayState> = MutableStateFlow(PlayStateManager.PlayState.Paused),
+    playbackTimeDisplayStore: MemoryDataStore<PlaybackTimeDisplay> = MemoryDataStore(PlaybackTimeDisplay.CHAPTER_TOTAL),
   ): BookPlayViewModel {
     return BookPlayViewModel(
       bookRepository = mockk {
@@ -334,6 +370,7 @@ class BookPlayViewModelTest {
       volumeGainFormatter = mockk(),
       batteryOptimization = mockk(),
       sleepTimerPreferenceStore = sleepTimerDataStore,
+      playbackTimeDisplayStore = playbackTimeDisplayStore,
       bookId = book.id,
       dispatcherProvider = DispatcherProvider(scope.coroutineContext, scope.coroutineContext, scope.coroutineContext),
       experimentalPlaybackPersistenceFeatureFlag = MemoryFeatureFlag(experimentalPlaybackPersistence),
