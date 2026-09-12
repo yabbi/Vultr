@@ -27,7 +27,9 @@ import voice.features.playbackScreen.history.HistorySheetContent
 import voice.features.playbackScreen.view.AddBookmarkDialog
 import voice.features.playbackScreen.view.BookPlayView
 import voice.features.playbackScreen.view.BookmarksBottomSheet
+import voice.features.playbackScreen.view.CoverAccentTheme
 import voice.features.playbackScreen.view.EditBookmarkSheet
+import voice.features.playbackScreen.view.rememberCoverAccent
 import voice.features.sleepTimer.SleepTimerDialog
 import voice.navigation.Destination
 import voice.navigation.NavEntryProvider
@@ -75,97 +77,99 @@ fun BookPlayScreen(bookId: BookId) {
       }
     }
   }
-  BookPlayView(
-    viewState,
-    onPlayClick = viewModel::playPause,
-    onFastForwardClick = viewModel::fastForward,
-    onRewindClick = viewModel::rewind,
-    onSeek = viewModel::seekTo,
-    onBookmarkClick = viewModel::onBookmarkClick,
-    onBookmarkLongClick = viewModel::onBookmarkLongClick,
-    onAddBookmarkClick = viewModel::onAddBookmarkFromSheet,
-    onHistoryClick = viewModel::onHistoryClick,
-    onSkipSilenceClick = viewModel::toggleSkipSilence,
-    onSleepTimerClick = viewModel::toggleSleepTimer,
-    onVolumeBoostClick = viewModel::onVolumeGainIconClick,
-    onSpeedChangeClick = viewModel::onPlaybackSpeedIconClick,
-    onCloseClick = viewModel::onCloseClick,
-    onSkipToNext = viewModel::next,
-    onSkipToPrevious = viewModel::previous,
-    onCurrentChapterClick = viewModel::onCurrentChapterClick,
-    onBookDetailsClick = viewModel::onBookDetailsClick,
-    // Two-pane only when the viewport is wider than tall (tablet landscape / phone landscape).
-    // Portrait tablets use the same stacked layout as phones for feature parity.
-    useLandscapeLayout = with(LocalConfiguration.current) { screenWidthDp > screenHeightDp },
-    snackbarHostState = snackbarHostState,
-  )
-  if (dialogState != null) {
-    when (dialogState) {
-      is BookPlayDialogViewState.SpeedDialog -> {
-        SpeedDialog(dialogState, viewModel)
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+    BookPlayView(
+      viewState,
+      onPlayClick = viewModel::playPause,
+      onFastForwardClick = viewModel::fastForward,
+      onRewindClick = viewModel::rewind,
+      onSeek = viewModel::seekTo,
+      onBookmarkClick = viewModel::onBookmarkClick,
+      onBookmarkLongClick = viewModel::onBookmarkLongClick,
+      onAddBookmarkClick = viewModel::onAddBookmarkFromSheet,
+      onHistoryClick = viewModel::onHistoryClick,
+      onSkipSilenceClick = viewModel::toggleSkipSilence,
+      onSleepTimerClick = viewModel::toggleSleepTimer,
+      onVolumeBoostClick = viewModel::onVolumeGainIconClick,
+      onSpeedChangeClick = viewModel::onPlaybackSpeedIconClick,
+      onCloseClick = viewModel::onCloseClick,
+      onSkipToNext = viewModel::next,
+      onSkipToPrevious = viewModel::previous,
+      onCurrentChapterClick = viewModel::onCurrentChapterClick,
+      onBookDetailsClick = viewModel::onBookDetailsClick,
+      // Two-pane only when the viewport is wider than tall (tablet landscape / phone landscape).
+      // Portrait tablets use the same stacked layout as phones for feature parity.
+      useLandscapeLayout = with(LocalConfiguration.current) { screenWidthDp > screenHeightDp },
+      snackbarHostState = snackbarHostState,
+    )
+    if (dialogState != null) {
+      when (dialogState) {
+        is BookPlayDialogViewState.SpeedDialog -> {
+          SpeedDialog(dialogState, viewModel)
+        }
+        is BookPlayDialogViewState.VolumeGainDialog -> {
+          VolumeGainDialog(dialogState, viewModel)
+        }
+        is BookPlayDialogViewState.SelectChapterDialog -> {
+          SelectChapterDialog(dialogState, viewModel)
+        }
+        is BookPlayDialogViewState.SleepTimer -> {
+          SleepTimerDialog(
+            viewState = dialogState.viewState,
+            onDismiss = viewModel::dismissDialog,
+            onIncrementSleepTime = viewModel::incrementSleepTime,
+            onDecrementSleepTime = viewModel::decrementSleepTime,
+            onAcceptSleepTime = viewModel::onAcceptSleepTime,
+            onAcceptSleepAtEndOfChapter = viewModel::onAcceptSleepAtEndOfChapter,
+          )
+        }
       }
-      is BookPlayDialogViewState.VolumeGainDialog -> {
-        VolumeGainDialog(dialogState, viewModel)
+    }
+    if (viewModel.showHistorySheet.value) {
+      val historyViewModel = retain("history-${bookId.value}") {
+        rootGraphAs<HistoryGraph>().historyViewModelFactory.create(bookId)
       }
-      is BookPlayDialogViewState.SelectChapterDialog -> {
-        SelectChapterDialog(dialogState, viewModel)
-      }
-      is BookPlayDialogViewState.SleepTimer -> {
-        SleepTimerDialog(
-          viewState = dialogState.viewState,
-          onDismiss = viewModel::dismissDialog,
-          onIncrementSleepTime = viewModel::incrementSleepTime,
-          onDecrementSleepTime = viewModel::decrementSleepTime,
-          onAcceptSleepTime = viewModel::onAcceptSleepTime,
-          onAcceptSleepAtEndOfChapter = viewModel::onAcceptSleepAtEndOfChapter,
+      val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+      ModalBottomSheet(
+        onDismissRequest = { viewModel.dismissHistorySheet() },
+        sheetState = sheetState,
+        containerColor = RavenTheme.colors.bgMain,
+      ) {
+        HistorySheetContent(
+          viewState = historyViewModel.viewState(),
+          onDelete = historyViewModel::onDelete,
+          onEntryClick = { id ->
+            historyViewModel.onEntryClick(id)
+            viewModel.dismissHistorySheet()
+          },
         )
       }
     }
-  }
-  if (viewModel.showHistorySheet.value) {
-    val historyViewModel = retain("history-${bookId.value}") {
-      rootGraphAs<HistoryGraph>().historyViewModelFactory.create(bookId)
-    }
-    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-    ModalBottomSheet(
-      onDismissRequest = { viewModel.dismissHistorySheet() },
-      sheetState = sheetState,
-      containerColor = RavenTheme.colors.bgMain,
-    ) {
-      HistorySheetContent(
-        viewState = historyViewModel.viewState(),
-        onDelete = historyViewModel::onDelete,
-        onEntryClick = { id ->
-          historyViewModel.onEntryClick(id)
-          viewModel.dismissHistorySheet()
-        },
+    if (viewModel.showBookmarksSheet.value) {
+      BookmarksBottomSheet(
+        groups = viewModel.bookmarkGroups.value,
+        onDismiss = viewModel::dismissBookmarksSheet,
+        onAddBookmark = viewModel::onAddBookmarkFromSheet,
+        onExportBookmarks = viewModel::exportBookmarks,
+        onEditBookmark = viewModel::onEditBookmark,
+        onDeleteBookmark = viewModel::deleteBookmark,
+        onBookmarkClick = viewModel::onBookmarkItemClick,
       )
     }
-  }
-  if (viewModel.showBookmarksSheet.value) {
-    BookmarksBottomSheet(
-      groups = viewModel.bookmarkGroups.value,
-      onDismiss = viewModel::dismissBookmarksSheet,
-      onAddBookmark = viewModel::onAddBookmarkFromSheet,
-      onExportBookmarks = viewModel::exportBookmarks,
-      onEditBookmark = viewModel::onEditBookmark,
-      onDeleteBookmark = viewModel::deleteBookmark,
-      onBookmarkClick = viewModel::onBookmarkItemClick,
-    )
-  }
-  if (viewModel.showAddBookmarkDialog.value) {
-    AddBookmarkDialog(
-      onDismiss = viewModel::dismissAddBookmarkDialog,
-      onSave = viewModel::saveNewBookmark,
-    )
-  }
-  val editState = viewModel.editBookmarkState.value
-  if (editState != null) {
-    EditBookmarkSheet(
-      state = editState,
-      onDismiss = viewModel::dismissEditBookmark,
-      onSave = viewModel::saveEditedBookmark,
-    )
+    if (viewModel.showAddBookmarkDialog.value) {
+      AddBookmarkDialog(
+        onDismiss = viewModel::dismissAddBookmarkDialog,
+        onSave = viewModel::saveNewBookmark,
+      )
+    }
+    val editState = viewModel.editBookmarkState.value
+    if (editState != null) {
+      EditBookmarkSheet(
+        state = editState,
+        onDismiss = viewModel::dismissEditBookmark,
+        onSave = viewModel::saveEditedBookmark,
+      )
+    }
   }
 }
 
@@ -183,5 +187,5 @@ interface BookPlayProvider {
     NavEntry(key) {
       BookPlayScreen(bookId = key.bookId)
     }
-  }
+}
 }
