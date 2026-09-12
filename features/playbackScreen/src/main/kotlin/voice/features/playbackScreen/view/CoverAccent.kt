@@ -70,7 +70,7 @@ internal fun CoverAccentTheme(
   content: @Composable () -> Unit,
 ) {
   val base = RavenTheme.colors
-  val tokens = accent?.let { CoverColors.tokens(it.toArgb(), base.isDark) }
+  val tokens = accent?.let { CoverColors.tokens(it.toArgb(), base.isDark, base.bgMain.toArgb()) }
   val primary by animateColorAsState(tokens?.primary?.let(::Color) ?: base.primary, label = "accent")
   val primaryLight by animateColorAsState(tokens?.primaryLight?.let(::Color) ?: base.primaryLight, label = "accentLight")
   val primaryDark by animateColorAsState(tokens?.primaryDark?.let(::Color) ?: base.primaryDark, label = "accentDark")

@@ -9,6 +9,12 @@ import org.junit.Test
 
 class CoverColorsTest {
 
+  private companion object {
+    val YELLOW = 0xFFFFF176.toInt()
+    val WHITE = 0xFFFFFFFF.toInt()
+    val NEAR_BLACK = 0xFF00030A.toInt()
+  }
+
   private fun pixels(vararg colors: Pair<Int, Int>): IntArray {
     return colors.flatMap { (color, count) -> List(count) { color } }.toIntArray()
   }
@@ -39,13 +45,25 @@ class CoverColorsTest {
   }
 
   @Test
-  fun `tokens keep the hue and clamp lightness for readable white content`() {
-    val tokens = CoverColors.tokens(0xFFFFF176.toInt(), dark = false)
+  fun `bright accent is darkened until readable on a light background`() {
+    val tokens = CoverColors.tokens(YELLOW, dark = false, background = WHITE)
     val hsl = CoverColors.toHsl(tokens.primary)
     hsl.hue.shouldBeGreaterThan(45f)
     hsl.hue.shouldBeLessThan(60f)
-    hsl.lightness.shouldBeLessThan(0.61f)
-    hsl.lightness.shouldBeGreaterThan(0.41f)
+    CoverColors.contrast(tokens.primary, WHITE).shouldBeGreaterThan(4.5f)
+  }
+
+  @Test
+  fun `bright accent is toned down on a dark background but stays readable`() {
+    val tokens = CoverColors.tokens(YELLOW, dark = true, background = NEAR_BLACK)
+    CoverColors.luminance(tokens.primary).shouldBeLessThan(0.46f)
+    CoverColors.contrast(tokens.primary, NEAR_BLACK).shouldBeGreaterThan(4.5f)
+  }
+
+  @Test
+  fun `dark accent is lightened until readable on a dark background`() {
+    val tokens = CoverColors.tokens(0xFF3B0A45.toInt(), dark = true, background = NEAR_BLACK)
+    CoverColors.contrast(tokens.primary, NEAR_BLACK).shouldBeGreaterThan(4.5f)
   }
 
   @Test

@@ -3,6 +3,7 @@ package voice.features.playbackScreen
 import kotlin.math.abs
 import kotlin.math.max
 import kotlin.math.min
+import kotlin.math.pow
 
 /**
  * Pure ARGB math so the extraction can be unit tested without an Android runtime.
@@ -68,22 +69,62 @@ internal object CoverColors {
   )
 
   /**
-   * Normalizes the accent so white icons stay readable on it and derives the related brand tokens.
+   * Normalizes the accent so it reads as text against [background] and derives the related brand
+   * tokens. HSL lightness alone is not enough: yellows and cyans at medium lightness are still
+   * nearly white, so the final check is a WCAG contrast ratio.
    */
   fun tokens(
     accent: Int,
     dark: Boolean,
+    background: Int,
   ): Tokens {
     val hsl = toHsl(accent)
     val hue = hsl.hue
     val saturation = hsl.saturation.coerceIn(0.4f, 0.9f)
-    val lightness = hsl.lightness.coerceIn(0.42f, 0.6f)
+    var lightness = hsl.lightness.coerceIn(0.42f, 0.6f)
+    if (dark) {
+      while (lightness > MIN_LIGHTNESS && luminance(fromHsl(hue, saturation, lightness)) > MAX_DARK_LUMINANCE) {
+        lightness -= LIGHTNESS_STEP
+      }
+      while (lightness < MAX_LIGHTNESS && contrast(fromHsl(hue, saturation, lightness), background) < MIN_TEXT_CONTRAST) {
+        lightness += LIGHTNESS_STEP
+      }
+    } else {
+      while (lightness > MIN_LIGHTNESS && contrast(fromHsl(hue, saturation, lightness), background) < MIN_TEXT_CONTRAST) {
+        lightness -= LIGHTNESS_STEP
+      }
+    }
     return Tokens(
       primary = fromHsl(hue, saturation, lightness),
       primaryLight = fromHsl(hue, saturation, if (dark) 0.68f else 0.78f),
       primaryDark = fromHsl(hue, saturation, if (dark) 0.85f else 0.22f),
       primaryFaint = fromHsl(hue, saturation.coerceAtMost(0.6f), if (dark) 0.12f else 0.96f),
     )
+  }
+
+  private const val MIN_TEXT_CONTRAST = 4.5f
+  private const val MAX_DARK_LUMINANCE = 0.45f
+  private const val LIGHTNESS_STEP = 0.02f
+  private const val MIN_LIGHTNESS = 0.15f
+  private const val MAX_LIGHTNESS = 0.85f
+
+  fun contrast(
+    a: Int,
+    b: Int,
+  ): Float {
+    val la = luminance(a)
+    val lb = luminance(b)
+    return (max(la, lb) + 0.05f) / (min(la, lb) + 0.05f)
+  }
+
+  fun luminance(color: Int): Float {
+    fun channel(value: Int): Float {
+      val c = value / 255f
+      return if (c <= 0.03928f) c / 12.92f else ((c + 0.055f) / 1.055f).pow(2.4f)
+    }
+    return 0.2126f * channel(color shr 16 and 0xFF) +
+      0.7152f * channel(color shr 8 and 0xFF) +
+      0.0722f * channel(color and 0xFF)
   }
 
   data class Hsl(
