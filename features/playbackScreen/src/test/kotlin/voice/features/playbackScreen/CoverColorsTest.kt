@@ -17,6 +17,8 @@ class CoverColorsTest {
     val YELLOW = 0xFFFFF176.toInt()
     val DARK_PURPLE = 0xFF3B0A45.toInt()
     val NAVY = 0xFF1F4E9C.toInt()
+    val ORANGE = 0xFFC88738.toInt()
+    val TAUPE = 0xFF6E6248.toInt()
   }
 
   private fun pixels(vararg colors: Pair<Int, Int>): IntArray {
@@ -52,6 +54,11 @@ class CoverColorsTest {
   }
 
   @Test
+  fun `a mid-tone orange passes the large-text threshold on white`() {
+    CoverColors.accent(pixels(ORANGE to 100), dark = false, background = WHITE) shouldBe ORANGE
+  }
+
+  @Test
   fun `bright yellow is skipped on a dark background as too glaring`() {
     val accent = CoverColors.accent(pixels(YELLOW to 900, BLUE to 50), dark = true, background = NEAR_BLACK)
     accent shouldBe BLUE
@@ -80,8 +87,23 @@ class CoverColorsTest {
   }
 
   @Test
-  fun `ranked colors are ordered by pixel count`() {
-    CoverColors.rankedColors(pixels(BLUE to 10, RED to 30, GREEN to 20)) shouldBe listOf(RED, GREEN, BLUE)
+  fun `equally vibrant colors are ordered by pixel count`() {
+    CoverColors.rankedColors(pixels(BLUE to 100, RED to 300, GREEN to 200)) shouldBe listOf(RED, GREEN, BLUE)
+  }
+
+  @Test
+  fun `a vivid color beats a more common muted one`() {
+    CoverColors.accent(pixels(TAUPE to 600, NAVY to 400), dark = false, background = WHITE) shouldBe NAVY
+  }
+
+  @Test
+  fun `a muted color still wins when it dominates the image`() {
+    CoverColors.accent(pixels(TAUPE to 950, NAVY to 50), dark = false, background = WHITE) shouldBe TAUPE
+  }
+
+  @Test
+  fun `a tiny usable color is still picked when nothing else passes`() {
+    CoverColors.accent(pixels(YELLOW to 990, NAVY to 10), dark = false, background = WHITE) shouldBe NAVY
   }
 
   @Test

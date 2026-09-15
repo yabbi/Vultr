@@ -13,12 +13,14 @@ internal object CoverColors {
   private const val QUANT_BITS = 4
   private const val QUANT_SHIFT = 8 - QUANT_BITS
   private const val MIN_SATURATION = 0.12f
-  private const val MIN_TEXT_CONTRAST = 4.5f
+  // Large-text threshold: trades some label legibility for more vivid accents in light mode.
+  private const val MIN_TEXT_CONTRAST = 3f
   private const val MAX_DARK_LUMINANCE = 0.45f
+  private const val VIBRANCY_FLOOR = 0.1f
 
   /**
-   * Ranks the image's colors by how many pixels they cover, drops the ones that would not be
-   * readable as text on [background], and returns the most present survivor untouched.
+   * Ranks the image's colors by coverage weighted by vibrancy, drops the ones that would not be
+   * readable as text on [background], and returns the best survivor untouched.
    */
   fun accent(
     pixels: IntArray,
@@ -40,7 +42,10 @@ internal object CoverColors {
     return true
   }
 
-  /** Colors present in the image, most common first. */
+  /**
+   * Colors present in the image, best first. Coverage is weighted by vibrancy so a vivid color
+   * beats a muted one unless the muted one is far more common.
+   */
   fun rankedColors(pixels: IntArray): List<Int> {
     val bucketCount = 1 shl (QUANT_BITS * 3)
     val counts = IntArray(bucketCount)
@@ -62,15 +67,23 @@ internal object CoverColors {
     }
     return (0 until bucketCount)
       .filter { counts[it] > 0 }
-      .sortedByDescending { counts[it] }
       .map { bucket ->
         val count = counts[bucket]
-        rgb(
+        val color = rgb(
           (sumR[bucket] / count).toInt(),
           (sumG[bucket] / count).toInt(),
           (sumB[bucket] / count).toInt(),
         )
+        color to count * (VIBRANCY_FLOOR + vibrancy(color))
       }
+      .sortedByDescending { (_, score) -> score }
+      .map { (color, _) -> color }
+  }
+
+  /** Chroma: high for vivid mid-tones, near zero for grays, pastels and very dark colors. */
+  fun vibrancy(color: Int): Float {
+    val hsl = toHsl(color)
+    return hsl.saturation * (1f - abs(2f * hsl.lightness - 1f))
   }
 
   data class Tokens(
