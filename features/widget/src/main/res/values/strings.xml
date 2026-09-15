@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-  <string name="widget_compact_label">Raven Compact</string>
-  <string name="widget_bar_label">Raven Bar</string>
-  <string name="widget_controls_label">Raven Controls</string>
-  <string name="widget_showcase_label">Raven Showcase</string>
+  <string name="widget_compact_label">Vultr Compact</string>
+  <string name="widget_bar_label">Vultr Bar</string>
+  <string name="widget_controls_label">Vultr Controls</string>
+  <string name="widget_showcase_label">Vultr Showcase</string>
   <string name="widget_time_left_hm">%1$dh %2$dm left</string>
   <string name="widget_time_left_m">%1$dm left</string>
 </resources>
