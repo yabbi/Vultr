@@ -17,8 +17,8 @@ import voice.core.strings.R as StringsR
 class VoiceMediaNotificationProvider(private val context: Context) : DefaultMediaNotificationProvider(context) {
 
   init {
-    // Use the Raven mark as the status-bar / cover-badge icon instead of the generic media glyph.
-    setSmallIcon(R.drawable.ic_raven_notification)
+    // Use the Vultr mark as the status-bar / cover-badge icon instead of the generic media glyph.
+    setSmallIcon(R.drawable.ic_vultr_notification)
   }
 
   override fun getMediaButtons(
