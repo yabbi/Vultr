@@ -7,6 +7,7 @@ import dev.zacsweers.metro.Assisted
 import dev.zacsweers.metro.AssistedFactory
 import dev.zacsweers.metro.AssistedInject
 import kotlinx.coroutines.MainScope
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.launch
 import voice.core.data.BookId
 import voice.core.data.repo.BookRepository
@@ -28,14 +29,15 @@ class EditBookViewModel(
 
   init {
     scope.launch {
-      val book = repo.get(bookId) ?: return@launch
-      _form.value = EditBookForm(
-        title = book.content.name,
-        author = book.content.author.orEmpty(),
-        date = book.content.year?.toString().orEmpty(),
-        description = book.content.description.orEmpty(),
-        cover = book.content.cover?.let(::ImmutableFile),
-      )
+      repo.flow(bookId).filterNotNull().collect { book ->
+        _form.value = EditBookForm(
+          title = book.content.name,
+          author = book.content.author.orEmpty(),
+          date = book.content.year?.toString().orEmpty(),
+          description = book.content.description.orEmpty(),
+          cover = book.content.cover?.let(::ImmutableFile),
+        )
+      }
     }
   }
 
@@ -64,6 +66,11 @@ class EditBookViewModel(
 
   fun onPickCover(uri: Uri) {
     navigator.goTo(Destination.EditCover(bookId, uri))
+  }
+
+  fun onAdjustCrop() {
+    val cover = form.value?.cover?.file ?: return
+    navigator.goTo(Destination.EditCover(bookId, Uri.fromFile(cover), adjustExisting = true))
   }
 
   fun onDownloadCover() {

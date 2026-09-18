@@ -85,6 +85,7 @@ fun EditBookScreen(bookId: BookId) {
     onSave = viewModel::save,
     onPickCover = viewModel::onPickCover,
     onDownloadCover = viewModel::onDownloadCover,
+    onAdjustCrop = viewModel::onAdjustCrop,
   )
 }
 
@@ -95,6 +96,7 @@ private fun EditBookContent(
   onSave: (String, String, String, String) -> Unit,
   onPickCover: (Uri) -> Unit,
   onDownloadCover: () -> Unit,
+  onAdjustCrop: () -> Unit,
 ) {
   var title by remember { mutableStateOf(form.title) }
   var author by remember { mutableStateOf(form.author) }
@@ -178,6 +180,12 @@ private fun EditBookContent(
                 CoverMenuItem("Download Cover") {
                   showCoverMenu = false
                   onDownloadCover()
+                }
+                if (form.cover != null) {
+                  CoverMenuItem("Adjust Crop") {
+                    showCoverMenu = false
+                    onAdjustCrop()
+                  }
                 }
               }
             }

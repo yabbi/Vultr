@@ -59,6 +59,34 @@ class CropOverlay @JvmOverloads constructor(
     },
   )
 
+  var onSelectionChanged: ((Rect) -> Unit)? = null
+  private var pendingFractions: RectF? = null
+
+  /** Selection relative to the image, each side in 0..1. */
+  var selectionFractions: RectF
+    get() = RectF(
+      dragRect.left / bounds.width(),
+      dragRect.top / bounds.height(),
+      dragRect.right / bounds.width(),
+      dragRect.bottom / bounds.height(),
+    )
+    set(value) {
+      if (bounds.isEmpty) {
+        pendingFractions = RectF(value)
+        return
+      }
+      dragRect.set(
+        value.left * bounds.width(),
+        value.top * bounds.height(),
+        value.right * bounds.width(),
+        value.bottom * bounds.height(),
+      )
+      preserveSize()
+      preserveBounds()
+      invalidate()
+      onSelectionChanged?.invoke(selectedRect)
+    }
+
   var selectionOn: Boolean by Delegates.observable(false) { _, old, new ->
     if (old != new) {
       updateForSelectionState()
@@ -160,14 +188,13 @@ class CropOverlay @JvmOverloads constructor(
             // just offset by drag
             dragRect.offset(deltaX, deltaY)
           } else if (eventType == EventType.RESIZE) {
-            // resize depending on which side touched
-            val inset = when (resizeType!!) {
-              Resize.TOP -> y - dragRect.top
-              Resize.RIGHT -> dragRect.right - x
-              Resize.BOTTOM -> dragRect.bottom - y
-              Resize.LEFT -> x - dragRect.left
+            val minSize = minRectSize()
+            when (resizeType!!) {
+              Resize.TOP -> dragRect.top = y.coerceIn(bounds.top, dragRect.bottom - minSize)
+              Resize.RIGHT -> dragRect.right = x.coerceIn(dragRect.left + minSize, bounds.right)
+              Resize.BOTTOM -> dragRect.bottom = y.coerceIn(dragRect.top + minSize, bounds.bottom)
+              Resize.LEFT -> dragRect.left = x.coerceIn(bounds.left, dragRect.right - minSize)
             }
-            dragRect.squareInset(inset)
           }
         }
         MotionEvent.ACTION_UP -> {
@@ -181,7 +208,10 @@ class CropOverlay @JvmOverloads constructor(
     preserveSize()
     preserveBounds()
     // only invalidate if there are changes
-    if (dragRect != dragRectCache) invalidate()
+    if (dragRect != dragRectCache) {
+      invalidate()
+      onSelectionChanged?.invoke(selectedRect)
+    }
     return true
   }
 
@@ -208,23 +238,10 @@ class CropOverlay @JvmOverloads constructor(
   }
 
   private fun preserveSize() {
-    val circleSize = bottomCircle.width
-
-    // preserve min size
     val minSize = minRectSize()
-    val w = dragRect.width()
-    if (w < minSize) {
-      val diff = minSize - w
-      dragRect.squareInset(-diff / 2f)
-    }
-
-    // preserve max size
-    val dragW = dragRect.width()
-    val boundsSize = min(bounds.width(), bounds.height()) - circleSize
-    val diff = dragW - boundsSize
-    if (diff > 0) {
-      dragRect.squareInset(diff / 2f)
-    }
+    val widthDiff = dragRect.width().coerceIn(minSize, bounds.width()) - dragRect.width()
+    val heightDiff = dragRect.height().coerceIn(minSize, bounds.height()) - dragRect.height()
+    dragRect.inset(-widthDiff / 2f, -heightDiff / 2f)
   }
 
   override fun onSizeChanged(
@@ -235,15 +252,17 @@ class CropOverlay @JvmOverloads constructor(
   ) {
     super.onSizeChanged(w, h, oldW, oldH)
 
-    // resets values
     lastTouchPoint.set(0f, 0f)
-    val wf = w.toFloat()
-    val hf = h.toFloat()
-    bounds.set(0f, 0f, wf, hf)
-    val dragSize = min(wf, hf)
-
-    dragRect.set(0f, 0f, dragSize, dragSize)
-    dragRect.offset(bounds.centerX() - dragSize / 2f, bounds.centerY() - dragSize / 2f)
+    // keep the relative selection when the view is resized, e.g. once the image has loaded
+    val previous = pendingFractions ?: if (!bounds.isEmpty) selectionFractions else null
+    pendingFractions = null
+    bounds.set(0f, 0f, w.toFloat(), h.toFloat())
+    if (previous != null) {
+      selectionFractions = previous
+    } else {
+      dragRect.set(bounds)
+      onSelectionChanged?.invoke(selectedRect)
+    }
   }
 
   /**

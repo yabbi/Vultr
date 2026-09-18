@@ -13,7 +13,7 @@ class CropTransformation(
 
   private val rect = cropOverlay.selectedRect
 
-  override val cacheKey: String = "cropTransformation"
+  override val cacheKey: String = "cropTransformation($rect)"
 
   override suspend fun transform(
     input: Bitmap,

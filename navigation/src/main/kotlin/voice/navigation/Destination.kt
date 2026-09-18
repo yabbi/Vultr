@@ -37,6 +37,7 @@ sealed interface Destination {
     val cover:
     @Serializable(with = UriSerializer::class)
     Uri,
+    val adjustExisting: Boolean = false,
   ) : Compose {
     override val trackingName: String get() = "EditCover"
   }

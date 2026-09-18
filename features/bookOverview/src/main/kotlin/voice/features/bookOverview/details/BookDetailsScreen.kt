@@ -117,7 +117,7 @@ internal fun BookDetailsScreen(
         }
         IconButton(onClick = onEditClick) {
           Icon(
-            painter = painterResource(UiR.drawable.ic_mage_dots),
+            painter = painterResource(UiR.drawable.ic_mage_edit_pen),
             contentDescription = "Edit book",
             modifier = Modifier.size(24.dp),
           )

@@ -26,7 +26,7 @@ internal constructor(
   public suspend fun save(
     bookId: BookId,
     cover: Bitmap,
-  ) {
+  ): File {
     val newCover = newBookCoverFile()
 
     withContext(Dispatchers.IO) {
@@ -59,6 +59,7 @@ internal constructor(
     }
 
     setBookCover(newCover, bookId)
+    return newCover
   }
 
   internal suspend fun newBookCoverFile(): File {
