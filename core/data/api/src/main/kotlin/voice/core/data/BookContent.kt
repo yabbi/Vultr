@@ -31,6 +31,9 @@ public data class BookContent(
   val description: String?,
   @ColumnInfo(defaultValue = "NULL")
   val year: Int? = null,
+  /** User-picked ARGB control color that replaces the color extracted from the cover. */
+  @ColumnInfo(defaultValue = "NULL")
+  val accentColor: Int? = null,
 ) {
 
   @Ignore

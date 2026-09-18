@@ -78,7 +78,7 @@ fun BookDetailsScreen(bookId: voice.core.data.BookId) {
     rootGraphAs<BookDetailsGraph>().bookDetailsViewModelFactory.create(bookId)
   }
   val viewState = viewModel.viewState() ?: return
-  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover, viewState.accentColor)) {
     BookDetailsScreen(
       viewState = viewState,
       onBackClick = viewModel::onBackClick,

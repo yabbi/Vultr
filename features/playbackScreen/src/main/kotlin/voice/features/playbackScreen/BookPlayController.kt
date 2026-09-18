@@ -77,7 +77,7 @@ fun BookPlayScreen(bookId: BookId) {
       }
     }
   }
-  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover, viewState.accentColor)) {
     BookPlayView(
       viewState,
       onPlayClick = viewModel::playPause,

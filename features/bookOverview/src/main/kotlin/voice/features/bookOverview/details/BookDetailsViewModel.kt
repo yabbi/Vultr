@@ -117,6 +117,7 @@ data class EditBookForm(
   val date: String,
   val description: String,
   val cover: ImmutableFile?,
+  val accentColor: Int?,
 )
 
 private fun formatHoursMinutes(ms: Long): String {
@@ -130,6 +131,7 @@ data class BookDetailsViewState(
   val title: String,
   val author: String?,
   val cover: ImmutableFile?,
+  val accentColor: Int?,
   val progress: Float,
   val remainingTime: String,
   val durationText: String,
@@ -158,6 +160,7 @@ private fun Book.toDetailsViewState(
   title = content.name,
   author = content.author,
   cover = content.cover?.let(::ImmutableFile),
+  accentColor = content.accentColor,
   progress = (position.toFloat() / duration.toFloat()).coerceIn(0F, 1F),
   remainingTime = formatHoursMinutes(duration - position) + " left",
   durationText = formatHoursMinutes(duration),

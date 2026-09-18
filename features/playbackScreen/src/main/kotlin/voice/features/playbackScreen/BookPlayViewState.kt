@@ -22,6 +22,7 @@ data class BookPlayViewState(
   val timeDisplay: PlaybackTimeDisplay,
   val playing: Boolean,
   val cover: ImmutableFile?,
+  val accentColor: Int?,
   val skipSilence: Boolean,
 ) {
 

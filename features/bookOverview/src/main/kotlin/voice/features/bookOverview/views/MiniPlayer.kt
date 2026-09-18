@@ -39,7 +39,7 @@ internal fun MiniPlayer(
   onClick: () -> Unit,
   onPlayClick: () -> Unit,
 ) {
-  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover, viewState.accentColor)) {
     MiniPlayerContent(viewState, onClick, onPlayClick)
   }
 }

@@ -52,6 +52,8 @@ import dev.zacsweers.metro.Provides
 import voice.core.common.rootGraphAs
 import voice.core.data.BookId
 import voice.core.ui.RavenTheme
+import voice.core.ui.theme.CoverAccentTheme
+import voice.core.ui.theme.rememberCoverAccent
 import voice.navigation.Destination
 import voice.navigation.NavEntryProvider
 import voice.core.ui.R as UiR
@@ -79,14 +81,18 @@ fun EditBookScreen(bookId: BookId) {
     rootGraphAs<EditBookGraph>().editBookViewModelFactory.create(bookId)
   }
   val form = viewModel.form.value ?: return
-  EditBookContent(
-    form = form,
-    onBack = viewModel::onBack,
-    onSave = viewModel::save,
-    onPickCover = viewModel::onPickCover,
-    onDownloadCover = viewModel::onDownloadCover,
-    onAdjustCrop = viewModel::onAdjustCrop,
-  )
+  CoverAccentTheme(accent = rememberCoverAccent(form.cover, form.accentColor)) {
+    EditBookContent(
+      form = form,
+      onBack = viewModel::onBack,
+      onSave = viewModel::save,
+      onPickCover = viewModel::onPickCover,
+      onDownloadCover = viewModel::onDownloadCover,
+      onAdjustCrop = viewModel::onAdjustCrop,
+      onAccentColorPicked = viewModel::onAccentColorPicked,
+      onResetAccentColor = viewModel::onResetAccentColor,
+    )
+  }
 }
 
 @Composable
@@ -97,12 +103,32 @@ private fun EditBookContent(
   onPickCover: (Uri) -> Unit,
   onDownloadCover: () -> Unit,
   onAdjustCrop: () -> Unit,
+  onAccentColorPicked: (Int) -> Unit,
+  onResetAccentColor: () -> Unit,
 ) {
   var title by remember { mutableStateOf(form.title) }
   var author by remember { mutableStateOf(form.author) }
   var date by remember { mutableStateOf(form.date) }
   var description by remember { mutableStateOf(form.description) }
   var showCoverMenu by remember { mutableStateOf(false) }
+  var showColorPicker by remember { mutableStateOf(false) }
+
+  val cover = form.cover
+  if (showColorPicker && cover != null) {
+    PickCoverColorDialog(
+      cover = cover,
+      currentOverride = form.accentColor,
+      onConfirm = { color ->
+        showColorPicker = false
+        onAccentColorPicked(color)
+      },
+      onReset = {
+        showColorPicker = false
+        onResetAccentColor()
+      },
+      onDismiss = { showColorPicker = false },
+    )
+  }
 
   val galleryLauncher = rememberLauncherForActivityResult(
     contract = ActivityResultContracts.GetContent(),
@@ -185,6 +211,10 @@ private fun EditBookContent(
                   CoverMenuItem("Adjust Crop") {
                     showCoverMenu = false
                     onAdjustCrop()
+                  }
+                  CoverMenuItem("Override Control Color") {
+                    showCoverMenu = false
+                    showColorPicker = true
                   }
                 }
               }

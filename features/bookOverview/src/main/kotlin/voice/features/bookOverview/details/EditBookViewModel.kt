@@ -36,6 +36,7 @@ class EditBookViewModel(
           date = book.content.year?.toString().orEmpty(),
           description = book.content.description.orEmpty(),
           cover = book.content.cover?.let(::ImmutableFile),
+          accentColor = book.content.accentColor,
         )
       }
     }
@@ -71,6 +72,20 @@ class EditBookViewModel(
   fun onAdjustCrop() {
     val cover = form.value?.cover?.file ?: return
     navigator.goTo(Destination.EditCover(bookId, Uri.fromFile(cover), adjustExisting = true))
+  }
+
+  fun onAccentColorPicked(color: Int) {
+    setAccentColor(color)
+  }
+
+  fun onResetAccentColor() {
+    setAccentColor(null)
+  }
+
+  private fun setAccentColor(color: Int?) {
+    scope.launch {
+      repo.updateBook(bookId) { it.copy(accentColor = color) }
+    }
   }
 
   fun onDownloadCover() {

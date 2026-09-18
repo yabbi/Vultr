@@ -25,6 +25,7 @@ data class MiniPlayerViewState(
   val chapterTitle: String,
   val author: String?,
   val cover: ImmutableFile?,
+  val accentColor: Int?,
   val progress: Float,
   val positionText: String,
   val durationText: String,
@@ -46,6 +47,7 @@ internal fun Book.toMiniPlayerViewState(playing: Boolean) = MiniPlayerViewState(
   chapterTitle = currentMark.name ?: currentChapter.name ?: content.name,
   author = content.author,
   cover = content.cover?.let(::ImmutableFile),
+  accentColor = content.accentColor,
   progress = progress(),
   // Global book position / total book duration, matching the player and notification.
   positionText = formatTime(position, duration),

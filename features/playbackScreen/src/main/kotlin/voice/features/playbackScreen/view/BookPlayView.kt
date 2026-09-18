@@ -132,6 +132,7 @@ private class BookPlayViewStatePreviewProvider : PreviewParameterProvider<BookPl
       chapterName = "My Chapter",
       showPreviousNextButtons = false,
       cover = null,
+      accentColor = null,
       duration = 10.minutes,
       playedTime = 3.minutes,
       bookDuration = 120.minutes,

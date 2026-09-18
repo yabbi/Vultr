@@ -152,6 +152,7 @@ class BookPlayViewModel(
       bookDuration = book.duration.milliseconds,
       timeDisplay = timeDisplay,
       cover = book.content.cover?.let(::ImmutableFile),
+      accentColor = book.content.accentColor,
       skipSilence = book.content.skipSilence,
     )
   }

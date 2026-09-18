@@ -41,8 +41,21 @@ private fun ImmutableFile.accentKey(
   background: Int,
 ) = AccentKey(file.absolutePath, file.lastModified(), dark, background)
 
+/**
+ * The color controls should follow for this book. A user-picked [override] wins over the color
+ * extracted from [cover] and is used as-is, without the readability filters.
+ */
 @Composable
-fun rememberCoverAccent(cover: ImmutableFile?): Color? {
+fun rememberCoverAccent(
+  cover: ImmutableFile?,
+  override: Int? = null,
+): Color? {
+  val extracted = rememberExtractedCoverAccent(cover)
+  return override?.let(::Color) ?: extracted
+}
+
+@Composable
+private fun rememberExtractedCoverAccent(cover: ImmutableFile?): Color? {
   val colors = RavenTheme.colors
   val background = colors.bgMain.toArgb()
   val cached = remember(cover, colors.isDark, background) {
