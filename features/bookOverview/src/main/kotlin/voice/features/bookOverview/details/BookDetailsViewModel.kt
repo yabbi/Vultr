@@ -19,6 +19,8 @@ import voice.core.data.store.CurrentBookStore
 import voice.core.playback.PlayerController
 import voice.core.playback.playstate.PlayStateManager
 import voice.core.ui.ImmutableFile
+import voice.core.data.durationMs
+import voice.core.ui.formatDuration
 import voice.core.ui.formatTime
 import voice.features.bookOverview.overview.MiniPlayerViewState
 import voice.features.bookOverview.overview.toMiniPlayerViewState
@@ -147,6 +149,7 @@ data class BookDetailsViewState(
     val chapterId: ChapterId,
     val title: String,
     val time: String,
+    val duration: String,
     val startMs: Long,
     val isCompleted: Boolean,
     val isCurrent: Boolean,
@@ -177,6 +180,7 @@ private fun Book.toDetailsViewState(
           chapterId = chapter.id,
           title = mark.name ?: chapter.name ?: content.name,
           time = formatTime(mark.startMs),
+          duration = formatDuration(mark.durationMs),
           startMs = mark.startMs,
           isCompleted = chapterIndex < currentChapterIndex ||
             (chapterIndex == currentChapterIndex && mark.startMs < currentMarkStartMs),

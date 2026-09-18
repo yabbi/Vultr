@@ -37,3 +37,9 @@ private fun Long.hours() = TimeUnit.MILLISECONDS.toHours(this)
 private fun Long.minutes() = TimeUnit.MILLISECONDS.toMinutes(this) % 60
 
 private fun Long.seconds() = TimeUnit.MILLISECONDS.toSeconds(this) % 60
+
+// Chapter marks end 1ms before the next mark starts, so round instead of truncating.
+fun formatDuration(durationMs: Long): String {
+  val roundedMs = (durationMs + 500) / 1000 * 1000
+  return formatTime(roundedMs)
+}

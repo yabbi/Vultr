@@ -45,6 +45,7 @@ import voice.core.sleeptimer.SleepTimerMode
 import voice.core.sleeptimer.SleepTimerMode.TimedWithDuration
 import voice.core.sleeptimer.SleepTimerState
 import voice.core.ui.ImmutableFile
+import voice.core.ui.formatDuration
 import voice.core.ui.formatTime
 import voice.features.playbackScreen.batteryOptimization.BatteryOptimization
 import voice.features.sleepTimer.SleepTimerViewState
@@ -281,6 +282,7 @@ class BookPlayViewModel(
               name = chapterMark.name ?: "",
               active = chapterMark == book.currentMark && chapter == book.currentChapter,
               time = formatTime(previousChapters.sumOf { it.duration } + chapterMark.startMs),
+              duration = formatDuration(chapterMark.durationMs),
             )
           }
         },

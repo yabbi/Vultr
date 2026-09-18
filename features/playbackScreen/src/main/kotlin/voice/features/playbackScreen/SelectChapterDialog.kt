@@ -117,8 +117,7 @@ private fun ChapterItem(
           overflow = TextOverflow.Ellipsis,
         )
         Text(
-          text = chapter.time,
-          modifier = Modifier.width(44.dp),
+          text = "${chapter.time} (${chapter.duration})",
           fontSize = 10.sp,
           letterSpacing = (-0.05).sp,
           color = timeColor,

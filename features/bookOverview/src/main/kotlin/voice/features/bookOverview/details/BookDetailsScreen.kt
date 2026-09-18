@@ -327,7 +327,7 @@ private fun ChapterListItem(
         overflow = TextOverflow.Ellipsis,
       )
       Text(
-        text = chapter.time,
+        text = "${chapter.time} (${chapter.duration})",
         modifier = Modifier.padding(start = 8.dp),
         style = MaterialTheme.typography.labelMedium,
         color = if (chapter.isCurrent) primary else MaterialTheme.colorScheme.onSurfaceVariant,
