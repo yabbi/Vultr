@@ -48,6 +48,8 @@ import dev.zacsweers.metro.ContributesTo
 import dev.zacsweers.metro.IntoSet
 import dev.zacsweers.metro.Provides
 import voice.core.common.rootGraphAs
+import voice.core.ui.theme.CoverAccentTheme
+import voice.core.ui.theme.rememberCoverAccent
 import voice.features.bookOverview.views.MiniPlayer
 import voice.navigation.Destination
 import voice.navigation.NavEntryProvider
@@ -76,15 +78,17 @@ fun BookDetailsScreen(bookId: voice.core.data.BookId) {
     rootGraphAs<BookDetailsGraph>().bookDetailsViewModelFactory.create(bookId)
   }
   val viewState = viewModel.viewState() ?: return
-  BookDetailsScreen(
-    viewState = viewState,
-    onBackClick = viewModel::onBackClick,
-    onPlayClick = viewModel::onPlayClick,
-    onChapterClick = viewModel::onChapterClick,
-    onMiniPlayerClick = viewModel::onMiniPlayerClick,
-    onMiniPlayerPlayClick = viewModel::onMiniPlayerPlayClick,
-    onEditClick = viewModel::onEditClick,
-  )
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+    BookDetailsScreen(
+      viewState = viewState,
+      onBackClick = viewModel::onBackClick,
+      onPlayClick = viewModel::onPlayClick,
+      onChapterClick = viewModel::onChapterClick,
+      onMiniPlayerClick = viewModel::onMiniPlayerClick,
+      onMiniPlayerPlayClick = viewModel::onMiniPlayerPlayClick,
+      onEditClick = viewModel::onEditClick,
+    )
+  }
 }
 
 @Composable

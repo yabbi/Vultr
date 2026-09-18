@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
 import voice.core.data.BookId
 import voice.core.ui.ImmutableFile
+import voice.core.ui.theme.PrewarmCoverAccent
 import voice.features.bookOverview.overview.BookOverviewItemViewState
 import voice.core.ui.R as UiR
 
@@ -202,6 +203,7 @@ internal fun ListBookRow(
 
 @Composable
 private fun CoverImage(cover: ImmutableFile?) {
+  PrewarmCoverAccent(cover)
   AsyncImage(
     modifier = Modifier
       .size(76.dp)

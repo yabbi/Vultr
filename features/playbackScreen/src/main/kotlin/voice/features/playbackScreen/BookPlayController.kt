@@ -27,9 +27,9 @@ import voice.features.playbackScreen.history.HistorySheetContent
 import voice.features.playbackScreen.view.AddBookmarkDialog
 import voice.features.playbackScreen.view.BookPlayView
 import voice.features.playbackScreen.view.BookmarksBottomSheet
-import voice.features.playbackScreen.view.CoverAccentTheme
+import voice.core.ui.theme.CoverAccentTheme
 import voice.features.playbackScreen.view.EditBookmarkSheet
-import voice.features.playbackScreen.view.rememberCoverAccent
+import voice.core.ui.theme.rememberCoverAccent
 import voice.features.sleepTimer.SleepTimerDialog
 import voice.navigation.Destination
 import voice.navigation.NavEntryProvider

@@ -1,4 +1,4 @@
-package voice.features.playbackScreen
+package voice.core.ui.theme
 
 import kotlin.math.abs
 import kotlin.math.max
@@ -8,7 +8,7 @@ import kotlin.math.pow
 /**
  * Pure ARGB math so the extraction can be unit tested without an Android runtime.
  */
-internal object CoverColors {
+object CoverColors {
 
   private const val QUANT_BITS = 4
   private const val QUANT_SHIFT = 8 - QUANT_BITS

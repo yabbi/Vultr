@@ -41,6 +41,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import voice.core.ui.theme.PrewarmCoverAccent
 import voice.core.data.BookId
 import voice.features.bookOverview.overview.BookOverviewItemViewState
 import voice.core.ui.R as UiR
@@ -126,6 +127,7 @@ internal fun GridBook(
         .clip(RoundedCornerShape(4.dp)),
       contentAlignment = Alignment.Center,
     ) {
+      PrewarmCoverAccent(book.cover)
       AsyncImage(
         modifier = Modifier.fillMaxWidth().aspectRatio(1f),
         contentScale = ContentScale.Crop,

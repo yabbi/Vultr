@@ -1,4 +1,4 @@
-package voice.features.playbackScreen
+package voice.core.ui.theme
 
 import io.kotest.matchers.floats.shouldBeGreaterThan
 import io.kotest.matchers.floats.shouldBeLessThan

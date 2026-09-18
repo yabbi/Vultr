@@ -1,5 +1,4 @@
 package voice.features.bookOverview.views
-import voice.core.ui.RavenTheme
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -28,11 +27,25 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import voice.core.ui.RavenTheme
+import voice.core.ui.theme.CoverAccentTheme
+import voice.core.ui.theme.rememberCoverAccent
 import voice.features.bookOverview.overview.MiniPlayerViewState
 import voice.core.ui.R as UiR
 
 @Composable
 internal fun MiniPlayer(
+  viewState: MiniPlayerViewState,
+  onClick: () -> Unit,
+  onPlayClick: () -> Unit,
+) {
+  CoverAccentTheme(accent = rememberCoverAccent(viewState.cover)) {
+    MiniPlayerContent(viewState, onClick, onPlayClick)
+  }
+}
+
+@Composable
+private fun MiniPlayerContent(
   viewState: MiniPlayerViewState,
   onClick: () -> Unit,
   onPlayClick: () -> Unit,
