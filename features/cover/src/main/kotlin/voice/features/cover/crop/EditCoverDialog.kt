@@ -13,7 +13,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -150,6 +154,7 @@ private fun CropDialog(
   var imageHeight by remember { mutableIntStateOf(0) }
   var selectedRect by remember { mutableStateOf<Rect?>(null) }
   var sourceBitmap by remember { mutableStateOf<ImageBitmap?>(null) }
+  var squareLocked by remember { mutableStateOf(false) }
 
   LaunchedEffect(coverUri) {
     sourceBitmap = context.imageLoader
@@ -184,11 +189,24 @@ private fun CropDialog(
                   onSelectionChanged = { selectedRect = it }
                   source.initialSelection?.let { selectionFractions = it }
                   selectionOn = true
+                  lockSquare = squareLocked
                   cropOverlay = this
                 }
               },
+              update = { it.lockSquare = squareLocked },
             )
           }
+        }
+
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .clickable { squareLocked = !squareLocked },
+          verticalAlignment = Alignment.CenterVertically,
+        ) {
+          Checkbox(checked = squareLocked, onCheckedChange = { squareLocked = it })
+          Spacer(modifier = Modifier.width(8.dp))
+          Text(text = "Square")
         }
 
         val bitmap = sourceBitmap

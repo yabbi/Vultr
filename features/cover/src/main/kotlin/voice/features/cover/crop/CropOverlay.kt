@@ -93,6 +93,15 @@ class CropOverlay @JvmOverloads constructor(
     }
   }
 
+  var lockSquare: Boolean by Delegates.observable(false) { _, old, new ->
+    if (old != new && new && !bounds.isEmpty) {
+      preserveSize()
+      preserveBounds()
+      invalidate()
+      onSelectionChanged?.invoke(selectedRect)
+    }
+  }
+
   init {
     setWillNotDraw(false)
 
@@ -195,6 +204,7 @@ class CropOverlay @JvmOverloads constructor(
               Resize.BOTTOM -> dragRect.bottom = y.coerceIn(dragRect.top + minSize, bounds.bottom)
               Resize.LEFT -> dragRect.left = x.coerceIn(bounds.left, dragRect.right - minSize)
             }
+            if (lockSquare) matchSquareTo(resizeType!!)
           }
         }
         MotionEvent.ACTION_UP -> {
@@ -237,8 +247,32 @@ class CropOverlay @JvmOverloads constructor(
     }
   }
 
+  private fun matchSquareTo(resize: Resize) {
+    when (resize) {
+      Resize.LEFT, Resize.RIGHT -> {
+        val half = dragRect.width() / 2f
+        val centerY = dragRect.centerY()
+        dragRect.top = centerY - half
+        dragRect.bottom = centerY + half
+      }
+      Resize.TOP, Resize.BOTTOM -> {
+        val half = dragRect.height() / 2f
+        val centerX = dragRect.centerX()
+        dragRect.left = centerX - half
+        dragRect.right = centerX + half
+      }
+    }
+  }
+
   private fun preserveSize() {
     val minSize = minRectSize()
+    if (lockSquare) {
+      val side = min(dragRect.width(), dragRect.height()).coerceIn(minSize, min(bounds.width(), bounds.height()))
+      val centerX = dragRect.centerX()
+      val centerY = dragRect.centerY()
+      dragRect.set(centerX - side / 2f, centerY - side / 2f, centerX + side / 2f, centerY + side / 2f)
+      return
+    }
     val widthDiff = dragRect.width().coerceIn(minSize, bounds.width()) - dragRect.width()
     val heightDiff = dragRect.height().coerceIn(minSize, bounds.height()) - dragRect.height()
     dragRect.inset(-widthDiff / 2f, -heightDiff / 2f)
