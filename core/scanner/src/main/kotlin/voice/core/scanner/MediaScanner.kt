@@ -97,29 +97,27 @@ internal class MediaScanner(
  * Resolves a file or folder into the whole books it contains, independent of how
  * deeply they are nested:
  * - an audio file is a single-file book,
- * - a folder that directly holds audio is one whole book (nested sub-folders such
- *   as discs or bonus content are folded in as chapters by the [ChapterParser]),
- * - a folder whose audio lives only in sub-folders is either a single multi-disc
- *   book (when those sub-folders look like discs/parts) or a container of several
- *   distinct books (e.g. an author or series folder), which is descended into.
+ * - a folder whose audio sub-folders all look like discs/parts (or that has none)
+ *   is one whole book; its direct audio files and part folders become chapters,
+ * - otherwise the folder is a container of distinct books (e.g. an author or
+ *   series folder): each audio file directly inside it is a single-file book and
+ *   each audio sub-folder is resolved recursively.
  */
 internal fun CachedDocumentFile.bookRoots(): List<CachedDocumentFile> {
   if (isFile) {
     return if (isAudioFile()) listOf(this) else emptyList()
   }
   val children = children
-  if (children.any { it.isAudioFile() }) {
-    return listOf(this)
-  }
   val audioSubFolders = children.filter { child ->
     child.isDirectory && child.walk().any { it.isAudioFile() }
   }
   return when {
-    // No audio anywhere: keep the folder itself as a (currently empty) book so a
-    // known book whose files are temporarily gone keeps its saved position.
+    // No audio in sub-folders: the folder itself is the book. This also keeps a
+    // known book whose files are temporarily gone as an (empty) book, so its
+    // saved position survives.
     audioSubFolders.isEmpty() -> listOf(this)
     audioSubFolders.all { it.looksLikeBookPart() } -> listOf(this)
-    else -> audioSubFolders.flatMap { it.bookRoots() }
+    else -> children.filter { it.isAudioFile() } + audioSubFolders.flatMap { it.bookRoots() }
   }
 }
 

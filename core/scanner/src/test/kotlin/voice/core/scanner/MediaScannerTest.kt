@@ -225,6 +225,47 @@ class MediaScannerTest {
     )
   }
 
+  @Test
+  fun scanRootKeepsSingleFileBookNextToBookFolders() = test {
+    val audiobooks = folder("audiobooks")
+
+    // author1 holds distinct book folders; an m4b dropped next to them is its own
+    // whole book and must not collapse the container into a single book.
+    val book1 = File(audiobooks, "author1/book1")
+    val book1Chapters = listOf(
+      audioFile(book1, "a.mp3"),
+      audioFile(book1, "b.mp3"),
+    )
+    val book2 = audioFile(File(audiobooks, "author1"), "book2.m4b")
+
+    scan(FolderType.Root, audiobooks)
+
+    assertBookContents(
+      BookContentView(book1, chapters = book1Chapters),
+      BookContentView(book2, chapters = listOf(book2)),
+    )
+  }
+
+  @Test
+  fun scanRootAddingSingleFileBookToContainerKeepsExistingBooks() = test {
+    val audiobooks = folder("audiobooks")
+
+    val book1 = File(audiobooks, "author1/book1")
+    val book1Chapters = listOf(audioFile(book1, "a.mp3"))
+
+    scan(FolderType.Root, audiobooks)
+    assertBookContents(BookContentView(book1, chapters = book1Chapters))
+
+    val book2 = audioFile(File(audiobooks, "author1"), "book2.m4b")
+
+    scan(FolderType.Root, audiobooks)
+
+    assertBookContents(
+      BookContentView(book1, chapters = book1Chapters),
+      BookContentView(book2, chapters = listOf(book2)),
+    )
+  }
+
   private fun test(test: suspend TestEnvironment.() -> Unit) {
     runTest {
       TestEnvironment().use { test(it) }
@@ -269,7 +310,7 @@ class MediaScannerTest {
       parent: File,
       name: String,
     ): File {
-      check(name.endsWith(".mp3"))
+      check(name.endsWith(".mp3") || name.endsWith(".m4b"))
       return File(parent, name)
         .also {
           it.parentFile?.mkdirs()

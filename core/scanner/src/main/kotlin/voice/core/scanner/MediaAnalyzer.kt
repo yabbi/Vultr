@@ -10,6 +10,7 @@ import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.exoplayer.source.TrackGroupArray
 import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.extractor.metadata.id3.ChapterFrame
+import androidx.media3.extractor.mp4.Mp4Extractor
 import androidx.media3.extractor.metadata.id3.CommentFrame
 import androidx.media3.extractor.metadata.id3.TextInformationFrame
 import androidx.media3.extractor.metadata.vorbis.VorbisComment
@@ -37,10 +38,12 @@ internal class MediaAnalyzer(
 ) {
 
   // we use a custom MediaSourceFactory because the default one for the
-  // retriever also extracts the covers
+  // retriever also extracts the covers.
+  // Very long m4b files have sample tables of hundreds of megabytes, which the
+  // retriever does not need and which would exhaust the heap while scanning.
   private val mediaSourceFactory = DefaultMediaSourceFactory(
     context,
-    DefaultExtractorsFactory(),
+    DefaultExtractorsFactory().setMp4ExtractorFlags(Mp4Extractor.FLAG_OMIT_TRACK_SAMPLE_TABLE),
   )
 
   suspend fun analyze(file: CachedDocumentFile): Metadata? {
